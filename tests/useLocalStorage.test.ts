@@ -159,11 +159,12 @@ describe(useLocalStorage, () => {
     );
 
     const [, setFoo] = result.current;
+    act(() => setFoo({ foo: 'baz' }));
     act(() => setFoo((state) => ({ ...state!, fizz: 'buzz' })));
     rerender();
 
     const [value] = result.current;
-    expect(value!.foo).toEqual('bar');
+    expect(value!.foo).toEqual('baz');
     expect(value!.fizz).toEqual('buzz');
   });
 
@@ -204,12 +205,19 @@ describe(useLocalStorage, () => {
     });
 
     it('memoizes the setState function', () => {
-      localStorage.setItem('foo', JSON.stringify({ ok: true }));
-      const { result, rerender } = renderHook(() => useLocalStorage('foo', { ok: true }));
+      const defaultKey = 'foo'
+      const { result, rerender } = renderHook(({ key }) => useLocalStorage(key, { ok: true }), {
+        initialProps: {
+          key: defaultKey,
+        },
+      });
       const [, s1] = result.current;
       rerender();
       const [, s2] = result.current;
+      rerender({ key: 'fizz' });
+      const [, s3] = result.current;
       expect(s1).toBe(s2);
+      expect(s2).toBe(s3);
     });
   });
 
